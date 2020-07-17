@@ -21,14 +21,13 @@ function autofill(date) {
     // If we're on the main page, i.e. if TeamSpirit has finished saving the previous modification
     if (document.getElementById("startTime") == null) {  // This might be broken
         day = String(date.toLocaleDateString("en-US", options_day));
-        console.log(day)
 
         // Early stop option
         var stop = false;
         var remark = document.getElementById("dailyNote" + year_month + day);
         if (remark.childNodes[0].childNodes[0].textContent.toUpperCase().trim() == "STOP") {
             stop = true;
-            console.log("Stopping")
+            console.log("Early stopping")
         }
 
         // If the day is a week-end or a holiday, then we just go to the next day. (Can't work on w.e. ==> Can't click them)
