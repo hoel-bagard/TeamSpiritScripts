@@ -2,7 +2,8 @@
 // There is a "Date Range" option in TeamSpirit, if you have worked remotely for an extended 
 // period of time, then consider using it to avoid spamming you manager.
 
-// Also, don't forget to put the "Office" remark before running this script
+// Also, don't forget to put the "Office" remark before running this script.
+// If you put a "Stop" remark on a day, then the script will stop on that day (before filling it)
 
 
 
@@ -20,11 +21,21 @@ function autofill(date) {
     // If we're on the main page, i.e. if TeamSpirit has finished saving the previous modification
     if (document.getElementById("startTime") == null) {  // This might be broken
         day = String(date.toLocaleDateString("en-US", options_day));
+        console.log(day)
+
+        // Early stop option
+        var stop = false;
+        var remark = document.getElementById("dailyNote" + year_month + day);
+        if (remark.childNodes[0].childNodes[0].textContent.toUpperCase().trim() == "STOP") {
+            stop = true;
+            console.log("Stopping")
+        }
+
         // If the day is a week-end or a holiday, then we just go to the next day. (Can't work on w.e. ==> Can't click them)
         try {
             // Do not apply for telework if there is an "Office" remark for that day
             var remark = document.getElementById("dailyNote" + year_month + day);
-            if remark.childNodes[0].childNodes[0].textContent.toUpperCase().trim() != "OFFICE"{
+            if (remark.childNodes[0].childNodes[0].textContent.toUpperCase().trim() != "OFFICE") {
                 var request = document.getElementById("ttvApply" + year_month + day);
                 // If there has already been a request for that day, then we skip it
                 if (request.title == "Attendance Related Request") {
@@ -45,7 +56,7 @@ function autofill(date) {
         catch (err) {}
         date.setDate(date.getDate() + 1);
         // Check what is the next day to fill. If it belongs to the current month then we continue, otherwise we stop.
-        if (date.getMonth() === month){
+        if (date.getMonth() === month && !stop){
             autofill(date);
         }
         else{
