@@ -14,28 +14,36 @@ var options_day = {day: '2-digit'};
 var options_month = {month: '2-digit'};
 var date = new Date(year, month, 1);
 var year_month = String(year) + "-" + String(d.toLocaleDateString("en-US", options_month)) + "-";
-var DEBUG = true;
+var DEBUG = true;  // Don't put it to false since the sleeps are necessary for now
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 
 // Takes care of filling the pop-up
-function fill_remote(date, callback){
+async function fill_remote(){
     // Wait for pop-up to appear and then fill it
     var change_req = document.getElementById("applyNew_patternS");
     if (change_req) {
         console.log("Pop-up loaded");
+        if (DEBUG) await sleep(1000);
         // This skips week-ends and holydays  ((if date.getDay() != 0 && date.getDay() != 6) doesn't work for holidays)
         if (change_req.childNodes[0].className == "empApplyMenuOn") {
+            if (DEBUG) await sleep(2000);
             change_req.click();
             document.getElementById("dlgApplyPatternList1").value = "a0V2u0000000VwSEAU";
             document.getElementById("empApplyDone1").click();
             if (DEBUG) console.log("Sent request");
+            if (DEBUG) await sleep(2000);
         }
         else{
             if (DEBUG) console.log("Was a week-end / holyday");
             document.getElementById("dialogApplyClose").click();
             if (DEBUG) console.log("Closed window");
+            if (DEBUG) await sleep(2000);
         }
-        if (typeof callback == "function") callback(date);
+        return;
     }
     else setTimeout(function() { fill_remote(); }, 100);  // check every 100ms
 }
@@ -51,9 +59,9 @@ function go_to_next_day(date){
 
 
 // This function asks for approval to telework for the days of the month one by one (recursively).
-function autofill(date) {
+async function autofill(date) {
     // If we're on the main page, i.e. if TeamSpirit has finished saving the previous modification
-    if (document.getElementById("startTime") == null && document.getElementById("dateColumn") != null) {
+    if (document.getElementById("startTime") == null) { // && document.getElementById("dateColumn") != null) {
         day = String(date.toLocaleDateString("en-US", options_day));
         if (DEBUG) console.log("Day: " + date);
 
@@ -71,10 +79,10 @@ function autofill(date) {
                 // If there has already been a request for that day, then we skip it
                 if (request.title == "Attendance Related Request") {
                     document.getElementById("ttvApply" + year_month + day).click();
-                    fill_remote(date, function(date) {
-                        if (DEBUG) console.log("Pop-up filled");
-                        go_to_next_day(date);
-                    });
+                    await fill_remote(date);
+                    if (DEBUG) console.log("Pop-up processed");
+                    if (DEBUG) await sleep(2000);
+                    go_to_next_day(date);
                 }
                 else { go_to_next_day(date); }
             }
@@ -84,11 +92,7 @@ function autofill(date) {
         }
     }
     // If TeamSpirit is still saving the modification (the "Please wait" pop-up), then we just wait 0.1s and try again
-    else {
-        setTimeout(function() {
-            autofill(date);
-        }, 100);  // check every 100ms
-    }
+    else setTimeout(function() { autofill(date); }, 100);  // check every 100ms
 }
 
 
